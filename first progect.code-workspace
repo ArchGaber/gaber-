@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../python progect/first progect"
+		},
+		{
+			"path": "F:/قران الحصري/TvQuran.com__Al-Hussary"
+		}
+	],
+	"settings": {
+		"python-envs.defaultEnvManager": "ms-python.python:system",
+		"liveServer.settings.multiRootWorkspaceName": "TvQuran.com__Al-Hussary"
+	}
+}
