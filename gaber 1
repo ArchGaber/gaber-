@@ -1,0 +1,937 @@
+/* app.js — نسخة مُصحّحة ومُحسّنة
+   - إعادة القائمة الكاملة للسور
+   - دعم قالب مخصص: إما قالب يحتوي على {reciterId} و/أو {surah} أو رابط mp3 مباشر
+   - تجربة صيغ متعددة للـ reciterId + padding للسورة
+   - طباعة محاولات الروابط في Console وإظهار حالة للمستخدم (ariaStatus)
+   - تعليقات بالعربية للشرح
+*/
+
+/* ========== بيانات السور (كاملة) ========== */
+const SURAH_LIST = [
+  {number:1, english:"Al-Fātiĥah", arabic:"الفاتحة"},
+  {number:2, english:"Al-Baqarah", arabic:"البقرة"},
+  {number:3, english:"Āl ʿImrān", arabic:"آل عمران"},
+  {number:4, english:"An-Nisāʼ", arabic:"النساء"},
+  {number:5, english:"Al-Mā'idah", arabic:"المائدة"},
+  {number:6, english:"Al-Anʻām", arabic:"الأنعام"},
+  {number:7, english:"Al-Aʻrāf", arabic:"الأعراف"},
+  {number:8, english:"Al-Anfāl", arabic:"الأنفال"},
+  {number:9, english:"At-Tawbah", arabic:"التوبة"},
+  {number:10, english:"Yūnus", arabic:"يونس"},
+  {number:11, english:"Hūd", arabic:"هود"},
+  {number:12, english:"Yūsuf", arabic:"يوسف"},
+  {number:13, english:"Ar-Raʻd", arabic:"الرعد"},
+  {number:14, english:"Ibrāhīm", arabic:"إبراهيم"},
+  {number:15, english:"Al-Ḥijr", arabic:"الحجر"},
+  {number:16, english:"An-Naĥl", arabic:"النحل"},
+  {number:17, english:"Al-Isrāʼ", arabic:"الإسراء"},
+  {number:18, english:"Al-Kahf", arabic:"الكهف"},
+  {number:19, english:"Maryam", arabic:"مريم"},
+  {number:20, english:"Tā Hā", arabic:"طه"},
+  {number:21, english:"Al-Anbiyāʼ", arabic:"الأنبياء"},
+  {number:22, english:"Al-Ḥajj", arabic:"الحج"},
+  {number:23, english:"Al-Muʼminūn", arabic:"المؤمنون"},
+  {number:24, english:"An-Nūr", arabic:"النور"},
+  {number:25, english:"Al-Furqān", arabic:"الفرقان"},
+  {number:26, english:"Ash-Shuʻarāʼ", arabic:"الشعراء"},
+  {number:27, english:"An-Naml", arabic:"النمل"},
+  {number:28, english:"Al-Qaṣaṣ", arabic:"القصص"},
+  {number:29, english:"Al-ʻAnkabūt", arabic:"العنكبوت"},
+  {number:30, english:"Ar-Rūm", arabic:"الروم"},
+  {number:31, english:"Luqmān", arabic:"لقمان"},
+  {number:32, english:"As-Sajdah", arabic:"السجدة"},
+  {number:33, english:"Al-Aĥzāb", arabic:"الأحزاب"},
+  {number:34, english:"Sabaʼ", arabic:"سبأ"},
+  {number:35, english:"Fāṭir", arabic:"فاطر"},
+  {number:36, english:"Yā Sīn", arabic:"يس"},
+  {number:37, english:"Aṣ-Ṣāffāt", arabic:"الصافات"},
+  {number:38, english:"Ṣād", arabic:"ص"},
+  {number:39, english:"Az-Zumar", arabic:"الزمر"},
+  {number:40, english:"Gāfir / Mu'min", arabic:"غافر"},
+  {number:41, english:"Fuṣṣilat", arabic:"فصلت"},
+  {number:42, english:"Ash-Shūrā", arabic:"الشورى"},
+  {number:43, english:"Az-Zukhruf", arabic:"الزخرف"},
+  {number:44, english:"Ad-Dukhān", arabic:"الدخان"},
+  {number:45, english:"Al-Jāthiyah", arabic:"الجاثية"},
+  {number:46, english:"Al-Aĥqāf", arabic:"الأحقاف"},
+  {number:47, english:"Muĥammad", arabic:"محمد"},
+  {number:48, english:"Al-Fatĥ", arabic:"الفتح"},
+  {number:49, english:"Al-Ḥujurāt", arabic:"الحجرات"},
+  {number:50, english:"Qāf", arabic:"ق"},
+  {number:51, english:"Aẓ-Ẓāriyāt", arabic:"الذاريات"},
+  {number:52, english:"Aṭ-Ṭūr", arabic:"الطور"},
+  {number:53, english:"An-Naĵm", arabic:"النجم"},
+  {number:54, english:"Al-Qamar", arabic:"القمر"},
+  {number:55, english:"Ar-Raĥmān", arabic:"الرحمن"},
+  {number:56, english:"Al-Wāqiʻah", arabic:"الواقعة"},
+  {number:57, english:"Al-Ĥadīd", arabic:"الحديد"},
+  {number:58, english:"Al-Mujādilah", arabic:"المجادلة"},
+  {number:59, english:"Al-Ḥashr", arabic:"الحشر"},
+  {number:60, english:"Al-Mumtaĥanah", arabic:"الممتحنة"},
+  {number:61, english:"Aş-Şaff", arabic:"الصف"},
+  {number:62, english:"Al-Jumuʻah", arabic:"الجمعة"},
+  {number:63, english:"Al-Munāfiqūn", arabic:"المنافقون"},
+  {number:64, english:"At-Taghābun", arabic:"التغابن"},
+  {number:65, english:"Aṭ-Ţalāq", arabic:"الطلاق"},
+  {number:66, english:"At-Taĥrīm", arabic:"التحريم"},
+  {number:67, english:"Al-Mulk", arabic:"الملك"},
+  {number:68, english:"Al-Qalam", arabic:"القلم"},
+  {number:69, english:"Al-Ĥāqqah", arabic:"الحاقة"},
+  {number:70, english:"Al-Maʻārij", arabic:"المعارج"},
+  {number:71, english:"Nūĥ", arabic:"نوح"},
+  {number:72, english:"Al-Jinn", arabic:"الجن"},
+  {number:73, english:"Al-Muzzammil", arabic:"المزمل"},
+  {number:74, english:"Al-Mudaththir", arabic:"المدثر"},
+  {number:75, english:"Al-Qiyāmah", arabic:"القيامة"},
+  {number:76, english:"Al-Insān", arabic:"الانسان"},
+  {number:77, english:"Al-Mursalāt", arabic:"المرسلات"},
+  {number:78, english:"An-Nabaʼ", arabic:"النبأ"},
+  {number:79, english:"An-Nāziʻāt", arabic:"النازعات"},
+  {number:80, english:"ʻAbasa", arabic:"عبس"},
+  {number:81, english:"At-Takwīr", arabic:"التكوير"},
+  {number:82, english:"Al-Infiţār", arabic:"الانفطار"},
+  {number:83, english:"Al-Muţaffifīn", arabic:"المطففين"},
+  {number:84, english:"Al-Inshiqāq", arabic:"الانشقاق"},
+  {number:85, english:"Al-Burūj", arabic:"البروج"},
+  {number:86, english:"Aţ-Ţāriq", arabic:"الطارق"},
+  {number:87, english:"Al-Aʻlā", arabic:"الأعلى"},
+  {number:88, english:"Al-Ghāshiyah", arabic:"الغاشية"},
+  {number:89, english:"Al-Fajr", arabic:"الفجر"},
+  {number:90, english:"Al-Balad", arabic:"البلد"},
+  {number:91, english:"Ash-Shams", arabic:"الشمس"},
+  {number:92, english:"Al-Layl", arabic:"الليل"},
+  {number:93, english:"Ad-Duḥā", arabic:"الضحى"},
+  {number:94, english:"Ash-Sharĥ", arabic:"الشرح"},
+  {number:95, english:"At-Tīn", arabic:"التين"},
+  {number:96, english:"Al-ʻAlaq", arabic:"العلق"},
+  {number:97, english:"Al-Qadr", arabic:"القدر"},
+  {number:98, english:"Al-Bayyinah", arabic:"البينة"},
+  {number:99, english:"Az-Zalzalah", arabic:"الزلزلة"},
+  {number:100, english:"Al-ʻĀdiyāt", arabic:"العاديات"},
+  {number:101, english:"Al-Qāriʻah", arabic:"القارعة"},
+  {number:102, english:"At-Takāthur", arabic:"التكاثر"},
+  {number:103, english:"Al-ʻAşr", arabic:"العصر"},
+  {number:104, english:"Al-Humazah", arabic:"الهمزة"},
+  {number:105, english:"Al-Fīl", arabic:"الفيل"},
+  {number:106, english:"Quraysh", arabic:"قريش"},
+  {number:107, english:"Al-Māʻūn", arabic:"الماعون"},
+  {number:108, english:"Al-Kawthar", arabic:"الكوثر"},
+  {number:109, english:"Al-Kāfirūn", arabic:"الكافرون"},
+  {number:110, english:"An-Naşr", arabic:"النصر"},
+  {number:111, english:"Al-Masad", arabic:"المسد"},
+  {number:112, english:"Al-Ikhlāṣ", arabic:"الإخلاص"},
+  {number:113, english:"Al-Falaq", arabic:"الفلق"},
+  {number:114, english:"An-Nās", arabic:"الناس"}
+];
+
+/* ========== بيانات الشيوخ (أمثلة) ========== */
+const RECITERS = [
+  { id: "ar.abdulrahman_sudais", name: "الشيخ عبد الرحمن السديس", info: "إمام الحرم المكي، تلاوة واضحة ومؤثرة." },
+  { id: "ar.saad_alghamidi", name: "الشيخ سعد الغامدي", info: "تلاوة مُرصّفة وجميلة." },
+  { id: "ar.mishary_alafasy", name: "الشيخ مشاري راشد العفاسي", info: "صوت محبوب ومؤثر." },
+  { id: "ar.abdulbasit_murattal", name: "الشيخ عبد الباسط عبد الصمد", info: "من أعظم القرّاء." },
+  { id: "ar.husary_mujawwad", name: "الشيخ محمود خليل الحصري", info: "تجويد متميز." },
+  { id: "ar.saood_shuraym", name: "الشيخ سعود الشريم", info: "إمام الحرم — تلاوة رصينة." },
+  { id: "ar.abdurrahman_alsudais", name: "عبد الرحمن السديس (نسخة)", info: "نسخة ثانية لتجربة slugs مختلفة." },
+  { id: "ar.minshawi", name: "الشيخ محمد صديق المنشاوي", info: "ترتيل هادئ ومؤثر." },
+  { id: "ar.shaatree", name: "الشيخ محمد شاكرة (مثال)", info: "قارئ إضافي لاختبار القوالب." },
+  { id: "ar.hani_rafaie", name: "الشيخ هاني الرفاعي", info: "نمط تلاوة مختلف." },
+  { id: "ar.ismail_raqee", name: "الشيخ إسماعيل رقي", info: "قارئ احتياطي" }
+];
+
+/* قالب افتراضي (يمكن تغييره في Settings) */
+const DEFAULT_TEMPLATE = "https://cdn.islamic.network/quran/audio/128/{reciterId}/{surah}.mp3";
+
+/* ========== حالة التطبيق ========== */
+const state = {
+  reciters: RECITERS,
+  surahs: SURAH_LIST,
+  selectedReciterIndex: 0,
+  selectedSurahIndex: -1,
+  recitationType: "murattal",
+  customTemplate: "",
+  autoAdvance: false,
+  useLocalAudio: true,
+  repeatMode: "off",
+  audio: null,
+  isPlaying: false
+};
+
+/* ========== مساعدات صغيرة ========== */
+function padSurah(n){ return String(n).padStart(3,"0"); }
+function formatTime(s){ if (!isFinite(s)) return "0:00"; const m = Math.floor(s/60); const sec = Math.floor(s%60).toString().padStart(2,"0"); return `${m}:${sec}`; }
+
+/* ========== DOM refs ========== */
+const reciterSelect = document.getElementById("reciterSelect");
+const typeSelect = document.getElementById("typeSelect");
+const surahListEl = document.getElementById("surahList");
+const surahNumberEl = document.getElementById("surahNumber");
+const surahNameEl = document.getElementById("surahName");
+const surahNameArabicEl = document.getElementById("surahNameArabic");
+const selectedReciterEl = document.getElementById("selectedReciter");
+const selectedTypeEl = document.getElementById("selectedType");
+const reciterInfoEl = document.getElementById("reciterInfo");
+const audioEl = document.getElementById("audio");
+const playPauseBtn = document.getElementById("playPauseBtn");
+const stopBtn = document.getElementById("stopBtn");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+const progressInput = document.getElementById("progress");
+const currentTimeEl = document.getElementById("currentTime");
+const durationEl = document.getElementById("duration");
+const volumeInput = document.getElementById("volume");
+const speedSelect = document.getElementById("speed");
+const repeatBtn = document.getElementById("repeatBtn");
+const themeToggle = document.getElementById("themeToggle");
+const searchInput = document.getElementById("search");
+const settingsDialog = document.getElementById("settingsDialog");
+const openSettingsBtn = document.getElementById("openSettings");
+const customTemplateInput = document.getElementById("customTemplate");
+const autoAdvanceInput = document.getElementById("autoAdvance");
+const ariaStatus = document.getElementById("ariaStatus");
+const useLocalAudioInput = document.getElementById("useLocalAudio");
+const localFilesStatusEl = document.getElementById("localFilesStatus");
+
+/* ========== دالة اختبار رابط mp3 (تعيد Promise<boolean>) ========== */
+function testAudioUrl(url, timeout = 6000){
+  return new Promise((resolve) => {
+    const a = new Audio();
+    a.preload = "metadata";
+    a.crossOrigin = "anonymous";
+    a.src = url;
+    let settled = false;
+    function finish(ok){
+      if (settled) return;
+      settled = true;
+      try{ a.pause(); } catch(e){}
+      a.src = "";
+      resolve(ok);
+    }
+    a.addEventListener("canplay", () => finish(true), {once:true});
+    a.addEventListener("loadedmetadata", () => finish(true), {once:true});
+    a.addEventListener("error", () => finish(false), {once:true});
+    setTimeout(() => finish(false), timeout);
+  });
+}
+
+/* ========== لو المستخدم وضع رابط mp3 كامل في الإعدادات نستخدمه مباشرة ========== */
+function isDirectMp3Template(t){
+  if (!t) return false;
+  const trimmed = t.trim();
+  // اعتبره رابط مباشر لو يحوي http و يتماثل مع .mp3 أو يحتوي {surah} و لا يحتوي {reciterId} => قد يكون قالب للسورة فقط
+  if (/^https?:\/\/.+\.mp3($|\?)/i.test(trimmed)) return true;
+  return false;
+}
+
+// مساعدة سريعة لاختبار ما إذا كان لدينا رابط محلي متوقع
+function getLocalSurahUrl(n){ return `sound/${padSurah(n)}.mp3`; }
+
+// يفحص وجود الملفات المحلية في الخلفية ويحدّث localFilesStatusEl
+async function scanLocalFiles(){
+  if (!state.useLocalAudio) {
+    if (localFilesStatusEl) localFilesStatusEl.textContent = 'Local files usage disabled in settings.';
+    return;
+  }
+  const total = state.surahs.length;
+  let found = 0;
+  for (let i=1;i<=total;i++){
+    try{
+      const url = getLocalSurahUrl(i);
+      const ok = await testAudioUrl(url, 1200);
+      if (ok){ state.localAvailable = state.localAvailable || {}; state.localAvailable[i]=true; found++; }
+    }catch(e){ /* ignore */ }
+    if (i % 20 === 0 && localFilesStatusEl) localFilesStatusEl.textContent = `Local files: checked ${i}/${total} — found ${found}`;
+  }
+  if (localFilesStatusEl) localFilesStatusEl.textContent = `Local files: ${found}/${total} available.`;
+  console.log('[scanLocalFiles] found local files:', found);
+}
+
+/* ========== تجربة صيغ متعددة لِـ reciterId و surah ========== */
+async function findWorkingAudioUrl(reciterId, surahNumber){
+  const template = state.customTemplate && state.customTemplate.trim().length>5 ? state.customTemplate.trim() : DEFAULT_TEMPLATE;
+
+  // 1) إذا المستخدم يسمح باستخدام الملفات المحلية ونملك نتيجة مُسبقَة استخدمها فوراً
+  if (state.useLocalAudio && state.localAvailable && state.localAvailable[surahNumber]){
+    const url = getLocalSurahUrl(surahNumber);
+    console.log('[audio-test] Using cached local file for', surahNumber, url);
+    return { ok:true, url };
+  }
+
+  // 2) جرب الملفات المحلية السريعة (timeout قصير) إذا كانت مفعّلة
+  if (state.useLocalAudio){
+    try {
+      const surahFormsLocal = [padSurah(surahNumber), String(surahNumber)];
+      for (const sForm of surahFormsLocal) {
+        const candidates = [`sound/${sForm}.mp3`, `./sound/${sForm}.mp3`, `sound/${sForm}.wav`, `./sound/${sForm}.wav`];
+        for (const url of candidates) {
+          console.log("[audio-test] Trying local URL:", url);
+          try {
+            const ok = await testAudioUrl(url, 2000);
+            if (ok) {
+              state.localAvailable = state.localAvailable || {};
+              state.localAvailable[surahNumber] = true;
+              return { ok:true, url };
+            }
+          } catch (e) { /* ignore */ }
+        }
+      }
+    } catch (e) { console.warn("[audio-test] local check failed", e); }
+  }
+
+  // إن القالب هو رابط mp3 مباشر (مثلاً المستخدم أضاف رابط لملف واحد) فركّز الاختبار عليه مباشرة:
+  if (isDirectMp3Template(template)){
+    console.log("[audio-test] Using direct mp3 template:", template);
+    // لو القالب لا يحتوي متغير، استخدمه كما هو
+    const ok = await testAudioUrl(template, 6000);
+    return ok ? { ok:true, url: template } : { ok:false, url:null };
+  }
+
+  // إن القالب يحتوي {reciterId} أو {surah} سنستبدل
+  const variants = [];
+  variants.push(reciterId);
+  variants.push(reciterId.replace(/^ar\./i,""));
+  if (reciterId.includes(".")) variants.push(reciterId.split(".").pop());
+  variants.push(reciterId.replace(/\./g,"_"));
+  variants.push(reciterId.replace(/\./g,"-"));
+  variants.push(reciterId.toLowerCase());
+  const uniqVariants = [...new Set(variants)];
+
+  const surahForms = [padSurah(surahNumber), String(surahNumber)];
+  for (const v of uniqVariants){
+    for (const sForm of surahForms){
+      const url = template.replace(/{reciterId}/g, v).replace(/{surah}/g, sForm).replace(/{number}/g, String(surahNumber));
+      console.log("[audio-test] Trying URL:", url);
+      try {
+        const ok = await testAudioUrl(url, 5000);
+        if (ok) return { ok:true, url };
+      } catch (e) {
+        console.warn("[audio-test] error testing", url, e);
+      }
+    }
+  }
+  return { ok:false, url:null };
+}
+
+/* ========== init UI & events ========== */
+function init(){
+  // populate reciters select
+  reciterSelect.innerHTML = "";
+  state.reciters.forEach((r, idx) => {
+    const opt = document.createElement("option");
+    opt.value = idx;
+    opt.textContent = r.name;
+    reciterSelect.appendChild(opt);
+  });
+
+  // populate surah list
+  surahListEl.innerHTML = "";
+  for (const s of state.surahs){
+    const btn = document.createElement("button");
+    btn.className = "surah";
+    btn.type = "button";
+    btn.setAttribute("data-number", s.number);
+    btn.innerHTML = `<div class="num">${s.number}</div><div class="names"><div>${s.english}</div><div class="arab">${s.arabic}</div></div>`;
+    btn.addEventListener("click", () => selectSurahByNumber(s.number));
+    surahListEl.appendChild(btn);
+  }
+
+  // init reciter display
+  updateSelectedReciter(0);
+  updateRecitationType(typeSelect.value);
+
+  // populate reciter grid (cards)
+  const reciterGrid = document.getElementById('reciterGrid');
+  if (reciterGrid){
+    reciterGrid.innerHTML = '';
+    state.reciters.forEach((r, idx) => {
+      const card = document.createElement('button');
+      card.className = 'reciter-card';
+      card.type = 'button';
+      card.setAttribute('data-idx', idx);
+      const avatar = document.createElement('div'); avatar.className='reciter-avatar';
+      // initials or icon
+      const initials = r.name.split(' ').slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+      avatar.textContent = initials || 'ق';
+      const meta = document.createElement('div'); meta.className='reciter-meta';
+      const nm = document.createElement('div'); nm.className='reciter-name'; nm.textContent = r.name;
+      const info = document.createElement('div'); info.className='reciter-info'; info.textContent = r.info;
+      meta.appendChild(nm); meta.appendChild(info);
+      card.appendChild(avatar); card.appendChild(meta);
+      card.addEventListener('click', ()=>{
+        updateSelectedReciter(idx);
+        card.classList.add('pulse'); setTimeout(()=>card.classList.remove('pulse'),900);
+      });
+      reciterGrid.appendChild(card);
+    });
+  }
+
+  // audio setup
+  state.audio = audioEl;
+  audioEl.volume = parseFloat(volumeInput.value);
+  audioEl.crossOrigin = "anonymous";
+
+  // استرجاع إعداد استخدام الملفات المحلية إن وُجد
+  const savedUseLocal = localStorage.getItem('ql_useLocalAudio');
+  if (savedUseLocal !== null) state.useLocalAudio = savedUseLocal === '1';
+  if (useLocalAudioInput) useLocalAudioInput.checked = state.useLocalAudio;
+
+  // بدء فحص الملفات المحلية في الخلفية
+  state.localAvailable = {};
+  scanLocalFiles();
+
+  progressInput.dragging = false;
+
+  attachEventListeners();
+
+  announce("جاهز. اختر سورة وقارئ لبدء الاختبار.");
+}
+
+function attachEventListeners(){
+  reciterSelect.addEventListener("change", (e) => updateSelectedReciter(parseInt(e.target.value)));
+  typeSelect.addEventListener("change", (e) => updateRecitationType(e.target.value));
+  playPauseBtn.addEventListener("click", togglePlayPause);
+  stopBtn.addEventListener("click", stopPlayback);
+  prevBtn.addEventListener("click", playPrevious);
+  nextBtn.addEventListener("click", playNext);
+
+  audioEl.addEventListener("loadedmetadata", () => {
+    durationEl.textContent = formatTime(audioEl.duration);
+    progressInput.max = audioEl.duration || 0;
+  });
+  audioEl.addEventListener("timeupdate", () => {
+    currentTimeEl.textContent = formatTime(audioEl.currentTime);
+    if (!progressInput.dragging) progressInput.value = audioEl.currentTime;
+  });
+  audioEl.addEventListener("ended", onAudioEnded);
+  audioEl.addEventListener("error", (e) => {
+    console.error("Audio element error:", e);
+    ariaStatus.textContent = "حدث خطأ في تشغيل الملف الصوتي. راجع Console / Network.";
+    announce("خطأ في تشغيل الملف الصوتي. راجع Console.");
+  });
+
+  progressInput.addEventListener("input", () => { progressInput.dragging = true; });
+  progressInput.addEventListener("change", (e) => { state.audio.currentTime = parseFloat(e.target.value); progressInput.dragging = false; });
+
+  volumeInput.addEventListener("input", (e) => { audioEl.volume = parseFloat(e.target.value); });
+  speedSelect.addEventListener("change", (e) => { audioEl.playbackRate = parseFloat(e.target.value); });
+
+  repeatBtn.addEventListener("click", cycleRepeat);
+
+  themeToggle.addEventListener("click", toggleTheme);
+  const savedTheme = localStorage.getItem("ql_theme");
+  if (savedTheme) setTheme(savedTheme);
+
+  document.addEventListener("keydown", onKeyDown);
+  searchInput.addEventListener("input", onSearch);
+
+  openSettingsBtn.addEventListener("click", () => {
+    customTemplateInput.value = state.customTemplate || "";
+    autoAdvanceInput.checked = state.autoAdvance;
+    if (useLocalAudioInput) useLocalAudioInput.checked = state.useLocalAudio;
+    settingsDialog.showModal();
+  });
+  document.getElementById("settingsForm").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    state.customTemplate = customTemplateInput.value.trim();
+    state.autoAdvance = autoAdvanceInput.checked;
+    if (useLocalAudioInput) state.useLocalAudio = useLocalAudioInput.checked;
+    localStorage.setItem('ql_useLocalAudio', state.useLocalAudio ? '1' : '0');
+    settingsDialog.close();
+    announce("تم حفظ الإعدادات.");
+  });
+  document.getElementById("cancelSettings").addEventListener("click", () => settingsDialog.close());
+}
+
+/* ========== واجهة التحديث ========== */
+function updateSelectedReciter(index){
+  state.selectedReciterIndex = index;
+  reciterSelect.value = index;
+  const r = state.reciters[index];
+  selectedReciterEl.textContent = r.name;
+  reciterInfoEl.textContent = r.info;
+  // highlight selected card if grid exists
+  const reciterGrid = document.getElementById('reciterGrid');
+  if (reciterGrid){
+    const cards = reciterGrid.querySelectorAll('.reciter-card');
+    cards.forEach(c=> c.classList.toggle('selected', parseInt(c.getAttribute('data-idx'))===index));
+  }
+  announce(`تم اختيار القارئ ${r.name}`);
+  if (state.selectedSurahIndex >= 0) loadSurah(state.surahs[state.selectedSurahIndex].number);
+}
+function updateRecitationType(type){
+  state.recitationType = type;
+  selectedTypeEl.textContent = type === "murattal" ? "Murattal" : "Mujawwad";
+  announce(`نوع التلاوة: ${selectedTypeEl.textContent}`);
+  if (state.selectedSurahIndex >= 0) loadSurah(state.surahs[state.selectedSurahIndex].number);
+}
+function selectSurahByNumber(n){
+  const idx = state.surahs.findIndex(s => s.number === n);
+  if (idx === -1) return;
+  state.selectedSurahIndex = idx;
+  updateNowPlaying(idx);
+  loadSurah(n);
+}
+function updateNowPlaying(idx){
+  const s = state.surahs[idx];
+  surahNumberEl.textContent = s.number;
+  surahNameEl.textContent = s.english;
+  surahNameArabicEl.textContent = s.arabic;
+}
+
+/* ========== تحميل السورة — مع اختبار القوالب ========== */
+async function loadSurah(surahNumber){
+  const reciter = state.reciters[state.selectedReciterIndex];
+  announce(`اختبار رابط السورة ${surahNumber} للقارئ ${reciter.name}...`);
+  ariaStatus.textContent = `اختبار روابط الصوت...`;
+
+  // إذا المستخدم وضع رابط mp3 مباشر في الإعدادات، نستخدمه كما هو (مفيد للاختبار)
+  if (isDirectMp3Template(state.customTemplate)){
+    const directUrl = state.customTemplate.trim();
+    console.log("[loadSurah] using direct mp3 from settings:", directUrl);
+    audioEl.src = directUrl;
+    audioEl.load();
+    announce("تم تحميل رابط MP3 المباشر من الإعدادات، اضغط تشغيل.");
+    return;
+  }
+
+  // غير ذلك، نحاول إيجاد رابط صالح بناءً على القالب/variants
+  const result = await findWorkingAudioUrl(reciter.id, surahNumber);
+
+  if (result.ok && result.url){
+    audioEl.src = result.url;
+    audioEl.load();
+    progressInput.value = 0;
+    currentTimeEl.textContent = "0:00";
+    durationEl.textContent = "0:00";
+    ariaStatus.textContent = `Loaded: ${result.url}`;
+    announce("تم تحميل الملف. اضغط تشغيل لبدء الاستماع.");
+    console.log("[loadSurah] Loaded audio URL:", result.url);
+  } else {
+    audioEl.src = "";
+    ariaStatus.textContent = `لم نتمكن من إيجاد ملف صوتي صالح. راجع Console لمعرفة الروابط التي جُرّبت (ستجد قائمة).`;
+    reciterInfoEl.textContent = `${reciter.info} — لم نتمكن من إيجاد ملف صوتي تلقائياً. جرّب وضع رابط mp3 مباشر في الإعدادات أو اختر قارئًا آخر.`;
+    announce("فشل في إيجاد ملف صوتي. افتح Console وانسخ أول رابط حاولناه.");
+    console.error("[loadSurah] No working audio URL found. حاول هذه الروابط في Console.");
+  }
+}
+
+/* ========== تشغيل وإيقاف ========== */
+function togglePlayPause(){
+  if (!audioEl.src){
+    announce("لم يتم تحميل ملف صوتي. اختر سورة أو ضع رابط mp3 في الإعدادات.");
+    return;
+  }
+  if (audioEl.paused){
+    audioEl.play().then(()=> { playPauseBtn.textContent = "⏸"; state.isPlaying = true; announce("تشغيل"); })
+      .catch(err => { console.error("Play failed:", err); announce("فشل التشغيل — تفاعل المستخدم مطلوب أو CORS/Policy يمنع التشغيل."); });
+  } else {
+    audioEl.pause(); playPauseBtn.textContent = "►"; state.isPlaying = false; announce("إيقاف مؤقت");
+  }
+}
+function stopPlayback(){ audioEl.pause(); audioEl.currentTime = 0; playPauseBtn.textContent = "►"; state.isPlaying = false; announce("تم الإيقاف"); }
+function onAudioEnded(){ if (state.repeatMode==="one"){ audioEl.currentTime=0; audioEl.play(); return; } if (state.autoAdvance||state.repeatMode==="all"){ const nextIdx=(state.selectedSurahIndex+1)%state.surahs.length; selectSurahByNumber(state.surahs[nextIdx].number); audioEl.play().catch(()=>{}); } else { state.isPlaying=false; playPauseBtn.textContent="►"; announce("انتهت السورة."); } }
+function playPrevious(){ if (state.selectedSurahIndex<=0){ announce("هذه أول سورة."); return;} selectSurahByNumber(state.surahs[state.selectedSurahIndex-1].number); audioEl.play().catch(()=>{}); }
+function playNext(){ if (state.selectedSurahIndex>=state.surahs.length-1){ announce("هذه آخر سورة."); return;} selectSurahByNumber(state.surahs[state.selectedSurahIndex+1].number); audioEl.play().catch(()=>{}); }
+
+/* ========== Repeat / Theme / Search / Keyboard ========== */
+function cycleRepeat(){ const order=["off","one","all"]; const next=(order.indexOf(state.repeatMode)+1)%order.length; state.repeatMode=order[next]; repeatBtn.setAttribute("aria-pressed", state.repeatMode!=="off"); repeatBtn.textContent = state.repeatMode==="off"? "🔁 Off" : state.repeatMode==="one"? "🔂 One" : "🔁 All"; announce(`Repeat: ${state.repeatMode}`); }
+function toggleTheme(){ const current=document.body.getAttribute("data-theme"); setTheme(current==="light"?"dark":"light"); }
+function setTheme(t){ document.body.setAttribute("data-theme", t); themeToggle.textContent = t==="dark"?"☀️":"🌙"; localStorage.setItem("ql_theme", t); announce(`Theme: ${t}`); }
+function onSearch(e){ const q=e.target.value.trim().toLowerCase(); const nodes=surahListEl.querySelectorAll(".surah"); nodes.forEach(node => { const num=node.getAttribute("data-number"); const s=state.surahs.find(x=>x.number===parseInt(num)); const hay=`${s.english} ${s.arabic} ${s.number}`.toLowerCase(); node.style.display = (q===""||hay.includes(q))? "" : "none"; }); }
+function onKeyDown(e){ const active=document.activeElement; if (active && (active.tagName==="INPUT"||active.tagName==="TEXTAREA"||active.isContentEditable)) return; switch(e.key.toLowerCase()){ case " ": e.preventDefault(); togglePlayPause(); break; case "s": openSettingsBtn.click(); break; case "arrowleft": audioEl.currentTime = Math.max(0, audioEl.currentTime-5); break; case "arrowright": audioEl.currentTime = Math.min(audioEl.duration||0, audioEl.currentTime+5); break; case "arrowup": audioEl.volume = Math.min(1, audioEl.volume+0.05); volumeInput.value = audioEl.volume; break; case "arrowdown": audioEl.volume = Math.max(0, audioEl.volume-0.05); volumeInput.value = audioEl.volume; break; case "m": audioEl.muted = !audioEl.muted; announce(audioEl.muted ? "Muted" : "Unmuted"); break; case "n": playNext(); break; case "p": playPrevious(); break; default: break; } }
+function announce(msg){ ariaStatus.textContent = msg; console.log("Announce:", msg); }
+
+/* ========== بدء التطبيق ========== */
+document.addEventListener("DOMContentLoaded", init);
+
+/* ========== ملاحظات مهمة عند الفشل المستمر ==========
+1) افتح DevTools -> Console وسترى سطور [audio-test] Trying URL: ... انسخ أول رابط حاولته وافتحه في تبويب جديد:
+   - إن ظهر 404 => القالب/slug خاطئ: عدّل قالب الصوت أو ضع رابط mp3 مباشر في Settings.
+   - إن ظهر 200 لكن لم يُسمع في صفحتي => ألقِ نظرة على Network response headers إن كان هناك Access-Control-Allow-Origin.
+   - إن كان الخطأ CORS في Console => لا يمكن إصلاحه من جهة العميل إلا إذا سمح المصدر بـ CORS أو استخدمت proxy من سيرفرك.
+
+2) أفضل اختبار سريع:
+   - افتح Settings وألصق رابط mp3 مباشر معروف (أحد ملفات mp3 صالح) ثم جرب التشغيل. إن اشتغل هذا، فالمشكلة في قالب/slug أو CORS لمصدر الملفات.
+
+3) أرسل لي هنا:
+   - أول رابط حاولته الذي طُبع في Console (سأحلل هل 404 أو CORS).
+   - أو انسخ صورة/نص الخطأ من Console.
+   سأحلّل الناتج و أقدّم تعديلًا مخصصًا (تصحيح slug أو قالب الرابط) أو أقول لك كيف تضبط CORS/proxy.
+
+*/ 
+{
+	"folders": [
+		{
+			"path": "../../python progect/first progect"
+		},
+		{
+			"path": "F:/قران الحصري/TvQuran.com__Al-Hussary"
+		}
+	],
+	"settings": {
+		"python-envs.defaultEnvManager": "ms-python.python:system",
+		"liveServer.settings.multiRootWorkspaceName": "TvQuran.com__Al-Hussary"
+	}
+}
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QuranListen — The World's Best Quran Listening Experience</title>
+
+  <!-- Theme preconnect for faster CDN audio (if used) -->
+  <link rel="preconnect" href="https://cdn.islamic.network" crossorigin>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Small meta for progressive enhancement -->
+  <meta name="description" content="Responsive, accessible Quran listening SPA with multiple reciters, murattal & mujawwad styles, advanced audio controls, search, dark mode, and keyboard navigation." />
+</head>
+<body class="app fade-in" data-theme="light">
+
+  <header class="topbar" role="banner">
+    <div class="brand" aria-hidden="false">
+      <div class="logo" aria-hidden="true">﷽</div>
+      <div class="titles">
+        <h1>QuranListen</h1>
+        <p class="tagline">Beautiful, accessible Quran listening — murattal & mujawwad</p>
+      </div>
+    </div>
+
+    <div class="controls" role="navigation" aria-label="Main controls">
+      <label class="sr-only" for="search">Search Surah or Reciter</label>
+      <input id="search" class="search" type="search" placeholder="Search surah, reciter or recitation type..." aria-label="Search surah, reciter or recitation type" />
+
+      <select id="reciterSelect" aria-label="Choose reciter" class="select">
+        <!-- Populated by JS -->
+      </select>
+
+      <select id="typeSelect" aria-label="Recitation type" class="select">
+        <option value="murattal">Murattal (Clear, measured)</option>
+        <option value="mujawwad">Mujawwad (Melodic)</option>
+      </select>
+
+      <button id="themeToggle" class="btn icon-btn" aria-pressed="false" aria-label="Toggle dark mode" title="Toggle dark / light mode">🌙</button>
+    </div>
+  </header>
+
+  <main class="main" role="main">
+    <aside class="sidebar" role="complementary" aria-label="Surah list">
+      <div class="panel">
+        <h2>Surahs</h2>
+        <div class="surah-list" id="surahList" tabindex="0" aria-label="List of surahs">
+          <!-- Surah items injected by JS -->
+        </div>
+      </div>
+
+      <div class="panel reciter-panel">
+        <h3>Reciter Info</h3>
+        <div id="reciterInfo" class="reciter-info" aria-live="polite">
+          <!-- Selected reciter description filled by JS -->
+        </div>
+
+        <div class="reciter-grid" id="reciterGrid" aria-label="Reciters">
+          <!-- Reciter cards populated by JS -->
+        </div>
+
+        <details>
+          <summary>Audio Source Templates</summary>
+          <p class="small">
+            Use provided templates to fetch high-quality MP3 per-surah from trusted CDNs (example: Islamic.Network CDN).
+            You can also paste a custom audio template URL in the settings panel (use {reciterId} and {surah} placeholders).
+          </p>
+          <ul class="small">
+            <li><code>https://cdn.islamic.network/quran/audio/128/{reciterId}/{surah}.mp3</code> (recommended)</li>
+            <li><code>https://download.quranicaudio.com/{reciterFolder}/{recitationType}/{surah}.mp3</code> (another option)</li>
+          </ul>
+        </details>
+      </div>
+    </aside>
+
+    <section class="player-area" aria-label="Player section">
+      <div class="card" id="nowPlaying" aria-live="polite">
+        <div class="now-top">
+          <div class="now-meta">
+            <div class="surah-meta">
+              <div id="surahNumber" class="surah-number">—</div>
+              <div>
+                <div id="surahName" class="surah-name">Select a surah</div>
+                <div id="surahNameArabic" class="surah-arabic" aria-hidden="true"></div>
+              </div>
+            </div>
+
+            <div class="recitation-meta">
+              <div id="selectedReciter">—</div>
+              <div id="selectedType" class="muted">—</div>
+            </div>
+          </div>
+
+          <div class="art">
+            <!-- Decorative Islamic-inspired pattern -->
+            <svg width="86" height="86" viewBox="0 0 100 100" aria-hidden="true">
+              <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#8fbf8f"/><stop offset="1" stop-color="#d4b255"/></linearGradient></defs>
+              <circle cx="50" cy="50" r="46" fill="url(#g)"></circle>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Player controls -->
+        <div class="player-controls" role="region" aria-label="Audio player controls">
+          <div class="big-controls">
+            <button id="prevBtn" class="btn icon-btn" aria-label="Previous surah">⟸</button>
+            <button id="playPauseBtn" class="btn play-btn" aria-label="Play" title="Play (Space)">►</button>
+            <button id="stopBtn" class="btn icon-btn" aria-label="Stop">■</button>
+            <button id="nextBtn" class="btn icon-btn" aria-label="Next surah">⟹</button>
+          </div>
+
+          <div class="progress-row">
+            <div class="time left" id="currentTime">0:00</div>
+            <div class="progress" role="slider" aria-label="Seek" tabindex="0">
+              <input id="progress" type="range" min="0" max="100" value="0" step="0.1" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" />
+            </div>
+            <div class="time right" id="duration">0:00</div>
+          </div>
+
+          <div class="secondary-controls">
+            <label class="small" for="volume">Vol</label>
+            <input id="volume" type="range" min="0" max="1" step="0.01" value="0.95" aria-label="Volume" />
+
+            <label class="small" for="speed">Speed</label>
+            <select id="speed" aria-label="Playback speed">
+              <option value="0.5">0.5x</option>
+              <option value="0.75">0.75x</option>
+              <option value="1" selected>1x</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2x</option>
+            </select>
+
+            <div class="repeat-group" role="group" aria-label="Repeat">
+              <button id="repeatBtn" class="btn icon-btn" aria-pressed="false" title="Repeat mode">🔁 Off</button>
+            </div>
+
+            <button id="openSettings" class="btn" aria-haspopup="dialog" aria-controls="settingsDialog">Settings</button>
+          </div>
+        </div>
+
+        <!-- Visually hidden audio element for screen readers (but controls are custom) -->
+        <audio id="audio" preload="auto" crossorigin="anonymous">
+          <!-- Source elements will be populated by JavaScript -->
+          your browser does not support the audio element.
+        </audio>
+      </div>
+
+      <!-- Settings dialog (basic, accessible) -->
+      <dialog id="settingsDialog" aria-labelledby="settingsTitle">
+        <h3 id="settingsTitle">Player settings</h3>
+        <form method="dialog" id="settingsForm">
+          <label for="customTemplate">Custom audio template (use {reciterId} and {surah})</label>
+          <input id="customTemplate" type="text" placeholder="https://cdn.example.com/audio/128/{reciterId}/{surah}.mp3" />
+
+          <label for="autoAdvance">Auto-advance to next surah</label>
+          <input id="autoAdvance" type="checkbox" />
+
+          <label for="useLocalAudio">Use local audio files (folder: <code>sound/</code>)</label>
+          <input id="useLocalAudio" type="checkbox" />
+
+          <p id="localFilesStatus" class="small" aria-live="polite" style="margin-top:6px;">Checking local files...</p>
+
+          <div class="dialog-actions">
+            <button id="saveSettings" class="btn primary" type="submit">Save</button>
+            <button id="cancelSettings" class="btn" type="button">Cancel</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- Accessibility helper -->
+      <div id="ariaStatus" class="sr-only" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer class="footer" role="contentinfo">
+    <div>
+      <small>Islamic-inspired design • No ads • Focused listening</small>
+    </div>
+    <div>
+      <small>Keyboard: Space Play/Pause • ←/→ Seek • ↑/↓ Volume • S Settings</small>
+    </div>
+  </footer>
+
+  <!-- App script -->
+  <script src="app.js" defer></script>
+</body>
+</html>
+:root{
+  /* Theme variables for light and dark. Keep colors subtle Islamic-inspired greens & golds */
+  --bg: #f7f9f8;
+  --card: #ffffff;
+  --muted: #6b6b6b;
+  --text: #073B2D;
+  --accent: #7fb07f; /* soft green */
+  --accent-2: #d4b255; /* gold */
+  --glass: rgba(255,255,255,0.6);
+  --shadow: 0 6px 18px rgba(2,8,6,0.08);
+  --radius: 12px;
+  --focus: 3px solid rgba(127,176,127,0.25);
+  --ease: cubic-bezier(.2,.9,.3,1);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color-scheme: light;
+}
+
+[data-theme="dark"]{
+  --bg: #02130f;
+  --card: #041916;
+  --muted: #9bb39e;
+  --text: #e7f6ef;
+  --accent: #6aa36a;
+  --accent-2: #b98f34;
+  --glass: rgba(10,20,18,0.4);
+  --shadow: 0 8px 28px rgba(0,0,0,0.6);
+  color-scheme: dark;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background: linear-gradient(180deg, var(--bg), rgba(255,255,255,0)) fixed;
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* Fade-in animation on load for smoothness */
+.fade-in{animation:fadeIn .6s var(--ease) both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Topbar */
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:12px 20px;
+  background: linear-gradient(90deg, rgba(127,176,127,0.06), rgba(212,178,85,0.03));
+  border-bottom:1px solid rgba(0,0,0,0.04);
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+.brand{display:flex;align-items:center;gap:12px}
+.logo{font-size:28px;background:linear-gradient(45deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.titles h1{margin:0;font-size:1.1rem}
+.tagline{margin:0;font-size:0.78rem;color:var(--muted)}
+
+/* Header controls */
+.controls{display:flex;gap:8px;align-items:center}
+.search{padding:8px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);min-width:220px;transition:box-shadow .2s var(--ease)}
+.search:focus{outline:none;box-shadow:var(--focus)}
+.select{padding:8px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);background:var(--card)}
+.btn{padding:8px 12px;border-radius:10px;border:0;background:var(--accent);color:white;cursor:pointer;transition:transform .12s var(--ease),box-shadow .12s var(--ease)}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.icon-btn{background:transparent;color:var(--text);padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06)}
+.play-btn{font-size:18px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;padding:12px 18px;border-radius:14px;box-shadow:0 8px 18px rgba(127,176,127,0.12)}
+.primary{background:var(--accent-2);}
+
+/* Layout */
+.main{display:flex;gap:20px;padding:22px;flex:1;align-items:flex-start}
+.sidebar{width:320px;max-width:38vw;min-width:260px}
+.panel{background:var(--card);padding:14px;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px}
+.surah-list{max-height:68vh;overflow:auto;padding:6px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.surah{
+  padding:8px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.04);
+  display:flex;align-items:center;gap:10px;cursor:pointer;background:linear-gradient(180deg,transparent,rgba(0,0,0,0.01));
+  transition:transform .12s var(--ease),box-shadow .12s var(--ease),background .12s var(--ease);
+}
+.surah:hover,.surah:focus{transform:translateY(-4px);box-shadow:var(--shadow);outline:none}
+.surah .num{font-weight:600;color:var(--accent-2);min-width:28px;text-align:center}
+.surah .names{font-size:0.92rem}
+.surah .arab{font-size:0.78rem;color:var(--muted)}
+
+/* Player area */
+.player-area{flex:1;min-width:320px}
+.card{background:var(--card);padding:18px;border-radius:var(--radius);box-shadow:var(--shadow)}
+.now-top{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.now-meta{display:flex;flex-direction:column;gap:8px}
+.surah-meta{display:flex;gap:10px;align-items:center}
+.surah-number{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;border-radius:10px;padding:8px 10px;font-weight:700}
+.surah-name{font-size:1.2rem;font-weight:700}
+.surah-arabic{font-size:1rem;color:var(--accent);font-family: "Scheherazade", serif}
+.recitation-meta{font-size:0.9rem;color:var(--muted);display:flex;flex-direction:column}
+
+/* Reciter grid (new UX) */
+.reciter-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+  gap:10px;
+  margin-top:12px;
+}
+.reciter-card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.01));
+  border-radius:10px;
+  padding:10px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  cursor:pointer;
+  border:1px solid rgba(0,0,0,0.04);
+  transition:transform .22s var(--ease), box-shadow .22s var(--ease), background .22s var(--ease);
+}
+.reciter-card.selected{ outline: 3px solid rgba(127,176,127,0.12); box-shadow: 0 18px 40px rgba(127,176,127,0.08); background: linear-gradient(180deg, rgba(127,176,127,0.03), rgba(212,178,85,0.02)); }
+.reciter-card:hover{ transform: translateY(-6px); box-shadow: 0 12px 30px rgba(0,0,0,0.12); }
+.reciter-avatar{ width:48px; height:48px; border-radius:8px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:white; display:flex;align-items:center;justify-content:center; font-weight:700}
+.reciter-meta{ display:flex; flex-direction:column; }
+.reciter-name{ font-size:0.95rem; font-weight:700 }
+.reciter-info{ font-size:0.78rem; color:var(--muted); }
+
+/* Now-playing artwork and subtle animation */
+.art{ transition: transform .45s cubic-bezier(.2,.9,.3,1); }
+.art.playing{ transform: rotate(4deg) scale(1.02); box-shadow: 0 12px 30px rgba(0,0,0,0.12); }
+
+/* Smooth controls */
+.player-controls .big-controls button{ transition: transform .12s ease, box-shadow .12s ease }
+.player-controls .big-controls button:active{ transform: scale(.98) }
+
+/* subtle pulse on play when starting */
+.pulse{ animation: pulse .9s ease; }
+@keyframes pulse{ 0%{ transform: scale(1); }50%{ transform: scale(1.04); }100%{ transform: scale(1); } }
+
+/* Player controls */
+.player-controls{margin-top:16px;display:flex;flex-direction:column;gap:12px}
+.big-controls{display:flex;gap:12px;align-items:center}
+.progress-row{display:flex;align-items:center;gap:12px}
+.progress{flex:1}
+.progress input[type=range]{width:100%}
+.time{font-size:0.9rem;color:var(--muted);min-width:44px;text-align:center}
+.secondary-controls{display:flex;gap:10px;align-items:center;border-top:1px dashed rgba(0,0,0,0.03);padding-top:12px}
+
+/* Footer */
+.footer{padding:12px 22px;background:transparent;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:0.85rem}
+
+/* Dialog */
+dialog{border-radius:12px;border:0;padding:18px;box-shadow:var(--shadow);background:var(--card)}
+.dialog-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+
+/* Accessibility helpers */
+.sr-only{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap;border:0;padding:0;margin:-1px}
+
+/* Responsive */
+@media (max-width:980px){
+  .main{flex-direction:column;padding:16px}
+  .sidebar{width:100%;max-width:100%}
+  .surah-list{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:560px){
+  .surah-list{grid-template-columns:repeat(2,1fr)}
+  .controls{flex-wrap:wrap}
+  .search{min-width:140px}
+}
+
+/* Smooth hover transitions */
+.surah, .btn, .select, .search {transition: all .15s var(--ease)}
